@@ -1,13 +1,15 @@
-package com.pd.bio;
-import com.pd.bio.http.PDRequest;
-import com.pd.bio.http.PDResponse;
-import com.pd.bio.http.PDServlet;
+package com.pd.netty;
+import com.pd.netty.handler.PDHttpHandler;
+import com.pd.netty.handler.PDHttpRequestDecoder;
+import com.pd.netty.handler.PDHttpResponseEncoder;
+import com.pd.netty.http.PDServlet;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -36,7 +38,7 @@ public class PDTomcat {
 
             for (Object k : webxml.keySet()) {
                 String key = k.toString();
-                if(key.endsWith(".url")){
+                if(key.endsWith(".url") && key.startsWith("netty.")){
                     String servletName = key.replaceAll("\\.url$", "");
                     String url = webxml.getProperty(key);
                     String className = webxml.getProperty(servletName + ".className");
@@ -51,35 +53,25 @@ public class PDTomcat {
 
     private void start(){
         init();
-        try(ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("GP Tomcat 已启动，监听的端口是：" + port);
-            while (true) {
-                Socket socket = serverSocket.accept();
-                process(socket);
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
+        //监听线程组，boss
+        NioEventLoopGroup parentGroup = new NioEventLoopGroup();
+        //工作线程组，worker
+        NioEventLoopGroup childGroup = new NioEventLoopGroup();
+        //服务端启动引导类
+        ServerBootstrap serverBootstrap = new ServerBootstrap();
+        serverBootstrap.group(parentGroup,childGroup)
+                // 指定io模型为nio
+                //.channel(OioServerSocketChannel.class)  指定为bio
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new PDHttpRequestDecoder());
+                        ch.pipeline().addLast(new PDHttpHandler(servletMap));
+                        ch.pipeline().addLast(new PDHttpResponseEncoder());
+                    }
+                }).bind(8080);
 
-    private void process(Socket socket) throws Exception{
-        InputStream is = socket.getInputStream();
-        OutputStream os = socket.getOutputStream();
-        PDRequest request = new PDRequest(is);
-        PDResponse response = new PDResponse(os);
-
-        String url = request.getUrl();
-        if(servletMap.containsKey(url)){
-            //6、调用实例化对象的service()方法，执行具体的逻辑doGet/doPost方法
-            servletMap.get(url).service(request,response);
-        }else{
-            response.write("404 - Not Found");
-        }
-
-        os.flush();
-        os.close();
-        is.close();
-        socket.close();
     }
 
     public static void main( String[] args ) {
