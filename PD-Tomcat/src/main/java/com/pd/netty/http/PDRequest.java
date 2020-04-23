@@ -1,31 +1,25 @@
 package com.pd.netty.http;
 
 
+import io.netty.handler.codec.http.HttpRequest;
+
 /**
  * @description: PD-PDTomcat
  * @author: zhaozhengkang
  * @date: 2020-04-22 09:23
  */
 public class PDRequest {
-    private String method;
+    private HttpRequest httpRequest;
 
-    private String url;
-
-    public String getMethod() {
-        return method;
+    public PDRequest(HttpRequest httpRequest) {
+        this.httpRequest = httpRequest;
     }
 
-    public void setMethod(String method) {
-        this.method = method;
+    public String getMethod() {
+        return httpRequest.method().name();
     }
 
     public String getUrl() {
-        return url;
+        return httpRequest.uri();
     }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-
 }

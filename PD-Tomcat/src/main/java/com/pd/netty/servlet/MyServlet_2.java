@@ -11,7 +11,7 @@ import com.pd.netty.http.PDServlet;
  */
 public class MyServlet_2 extends PDServlet {
     protected void doPost(PDRequest request, PDResponse response) throws Exception{
-        response.setContent("This is 2 Serlvet");
+        response.write("This is 2 Serlvet");
 
     }
 

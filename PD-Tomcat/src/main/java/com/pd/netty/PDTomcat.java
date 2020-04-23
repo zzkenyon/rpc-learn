@@ -1,13 +1,15 @@
 package com.pd.netty;
-import com.pd.netty.handler.PDHttpHandler;
-import com.pd.netty.handler.PDHttpRequestDecoder;
-import com.pd.netty.handler.PDHttpResponseEncoder;
+import com.pd.netty.handler.PDTomcatHandler;
 import com.pd.netty.http.PDServlet;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 
 import java.io.FileInputStream;
 import java.util.HashMap;
@@ -25,7 +27,7 @@ import java.util.Properties;
  */
 public class PDTomcat {
 
-    private static final int port = 8081;
+    private static final int port = 8080;
     private Map<String, PDServlet> servletMap = new HashMap<>();
     private Properties webxml = new Properties();
     private void init(){
@@ -58,20 +60,39 @@ public class PDTomcat {
         //工作线程组，worker
         NioEventLoopGroup childGroup = new NioEventLoopGroup();
         //服务端启动引导类
-        ServerBootstrap serverBootstrap = new ServerBootstrap();
-        serverBootstrap.group(parentGroup,childGroup)
-                // 指定io模型为nio
-                //.channel(OioServerSocketChannel.class)  指定为bio
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<NioSocketChannel>() {
-                    @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new PDHttpRequestDecoder());
+        try {
+            ServerBootstrap serverBootstrap = new ServerBootstrap();
+            serverBootstrap.group(parentGroup,childGroup)
+                    // 指定io模型为nio
+                    //.channel(OioServerSocketChannel.class)  指定为bio
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                        @Override
+                        protected void initChannel(NioSocketChannel ch) throws Exception {
+                            //使用自定义的编解码器
+                        /*ch.pipeline().addLast(new PDHttpRequestDecoder());
                         ch.pipeline().addLast(new PDHttpHandler(servletMap));
-                        ch.pipeline().addLast(new PDHttpResponseEncoder());
-                    }
-                }).bind(8080);
+                        ch.pipeline().addLast(new PDHttpResponseEncoder());*/
+                            //使用netty内置的http编解码器,只需关注业务内容
+                            ch.pipeline().addLast(new HttpResponseEncoder());
 
+                            ch.pipeline().addLast(new HttpRequestDecoder());
+
+                            ch.pipeline().addLast(new PDTomcatHandler(servletMap));
+                        }
+                    })
+                    // 针对主线程的配置 分配线程最大数量 128
+                    .option(ChannelOption.SO_BACKLOG, 128)
+                    // 针对子线程的配置 保持长连接
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+
+            // 启动服务器
+            ChannelFuture f = serverBootstrap.bind(port).sync();
+            System.out.println("GP Tomcat 已启动，监听的端口是：" + port);
+            f.channel().closeFuture().sync();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static void main( String[] args ) {

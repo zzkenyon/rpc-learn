@@ -16,6 +16,6 @@ public class MyServlet_1 extends PDServlet {
     }
 
     public void doPost(PDRequest request, PDResponse response) throws Exception {
-        response.setContent("This is 1 Serlvet");
+        response.write("This is 1 Serlvet");
     }
 }
