@@ -74,17 +74,19 @@ public class PDTomcat {
                         ch.pipeline().addLast(new PDHttpHandler(servletMap));
                         ch.pipeline().addLast(new PDHttpResponseEncoder());*/
                             //使用netty内置的http编解码器,只需关注业务内容
-                            ch.pipeline().addLast(new HttpResponseEncoder());
 
                             ch.pipeline().addLast(new HttpRequestDecoder());
 
                             ch.pipeline().addLast(new PDTomcatHandler(servletMap));
+
+                            ch.pipeline().addLast(new HttpResponseEncoder());
+
                         }
                     })
                     // 针对主线程的配置 分配线程最大数量 128
                     .option(ChannelOption.SO_BACKLOG, 128)
                     // 针对子线程的配置 保持长连接
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    .childOption(ChannelOption.SO_KEEPALIVE, false);
 
             // 启动服务器
             ChannelFuture f = serverBootstrap.bind(port).sync();

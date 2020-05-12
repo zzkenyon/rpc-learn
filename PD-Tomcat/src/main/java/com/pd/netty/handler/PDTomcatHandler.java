@@ -36,7 +36,11 @@ public class PDTomcatHandler extends ChannelInboundHandlerAdapter {
                 pdResponse.write("404 - Not Found");
             }
             HttpResponse httpResponse = pdResponse.getResponse();
-            ctx.writeAndFlush(httpResponse);
+            // 一定要用调用channel的writeAndFlush方法 才会从tail节点开始write
+            ctx.channel().writeAndFlush(httpResponse);
+            // 错误调用 导致writeAndFlush时从当前节点向前传播
+            // 从而add在此节点后面的OutBoundHandler无法被调用到
+            //ctx.writeAndFlush(httpResponse);
         }
     }
 

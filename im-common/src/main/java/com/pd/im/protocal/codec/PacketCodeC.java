@@ -1,6 +1,11 @@
-package com.pd.im.protocal;
+package com.pd.im.protocal.codec;
 
 
+import com.pd.im.protocal.Command;
+import com.pd.im.protocal.MessageRequestPacket;
+import com.pd.im.protocal.MessageResponsePacket;
+import com.pd.im.protocal.login.LoginRequestPacket;
+import com.pd.im.protocal.login.LoginResponsePacket;
 import com.pd.im.serializer.JSONSerializer;
 import com.pd.im.serializer.Serializer;
 import io.netty.buffer.ByteBuf;
@@ -25,7 +30,7 @@ public enum  PacketCodeC {
         packetTypeMap.put(Command.LOGIN_REQUEST, LoginRequestPacket.class);
         packetTypeMap.put(Command.LOGIN_RESPONSE, LoginResponsePacket.class);
         packetTypeMap.put(Command.MESSAGE_REQUEST, MessageRequestPacket.class);
-        packetTypeMap.put(Command.MESSAGE_RESPONSE,MessageResponsePacket.class);
+        packetTypeMap.put(Command.MESSAGE_RESPONSE, MessageResponsePacket.class);
 
         serializerMap = new HashMap<>();
         Serializer serializer = new JSONSerializer();

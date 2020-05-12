@@ -1,4 +1,4 @@
-package com.pd.im.protocal;
+package com.pd.im.protocal.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

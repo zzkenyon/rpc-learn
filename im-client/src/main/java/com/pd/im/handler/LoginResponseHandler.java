@@ -1,8 +1,8 @@
 package com.pd.im.handler;
 
 
-import com.pd.im.protocal.LoginResponsePacket;
-import com.pd.im.protocal.LoginUtil;
+import com.pd.im.protocal.login.LoginResponsePacket;
+import com.pd.im.protocal.login.LoginUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 

@@ -1,24 +1,25 @@
 package com.pd.im;
 
+import com.pd.im.handler.AuthHandler;
 import com.pd.im.handler.LoginRequestHandler;
 import com.pd.im.handler.MessageRequestHandler;
-import com.pd.im.protocal.PacketDecoder;
-import com.pd.im.protocal.PacketEncoder;
+import com.pd.im.handler.Spliter;
+import com.pd.im.protocal.codec.PacketDecoder;
+import com.pd.im.protocal.codec.PacketEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 /**
  * @description: im-server
  * @author: zhaozhengkang
  * @date: 2020-04-22 16:09
  */
-public class ImServerBootStrap {
+public class ServerBootStrap {
     public static void main(String[] args) {
-        NioEventLoopGroup parentGroup = new NioEventLoopGroup();
+        NioEventLoopGroup parentGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup childGroup = new NioEventLoopGroup();
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(parentGroup,childGroup)
@@ -26,17 +27,17 @@ public class ImServerBootStrap {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,
-                                7,
-                                4));
+                        ch.pipeline().addLast(new Spliter());
                         ch.pipeline().addLast(new PacketDecoder());
                         ch.pipeline().addLast(new LoginRequestHandler());
+                        ch.pipeline().addLast(new AuthHandler());
                         ch.pipeline().addLast(new MessageRequestHandler());
                         ch.pipeline().addLast(new PacketEncoder());
                     }
                 });
         bind(serverBootstrap,8000);
     }
+
     private static void bind(final ServerBootstrap serverBootstrap,final int port){
         serverBootstrap.bind(port).addListener(future -> {
             if(future.isSuccess()){

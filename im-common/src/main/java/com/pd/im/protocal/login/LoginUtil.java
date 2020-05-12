@@ -1,5 +1,6 @@
-package com.pd.im.protocal;
+package com.pd.im.protocal.login;
 
+import com.pd.im.protocal.Attributes;
 import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 

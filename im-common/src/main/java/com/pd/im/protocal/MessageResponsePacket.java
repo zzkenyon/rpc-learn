@@ -1,5 +1,6 @@
 package com.pd.im.protocal;
 
+import com.pd.im.protocal.codec.Packet;
 import lombok.Data;
 
 /**

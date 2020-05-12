@@ -1,9 +1,13 @@
 package com.pd.im;
 
-import com.pd.im.handler.ImNettyClientHandler;
 import com.pd.im.handler.LoginResponseHandler;
 import com.pd.im.handler.MessageResponseHandler;
 import com.pd.im.protocal.*;
+import com.pd.im.protocal.codec.PacketCodeC;
+import com.pd.im.protocal.codec.PacketDecoder;
+import com.pd.im.protocal.codec.PacketEncoder;
+import com.pd.im.protocal.login.LoginRequestPacket;
+import com.pd.im.protocal.login.LoginUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -20,7 +24,7 @@ import java.util.Scanner;
  * @author: zhaozhengkang
  * @date: 2020-04-22 16:25
  */
-public class ImClientBootStrap {
+public class BootStrap {
     public static void main(String[] args) {
         NioEventLoopGroup group = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
@@ -30,8 +34,8 @@ public class ImClientBootStrap {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 7, 4));
-                        ch.pipeline().addLast(new ImNettyClientHandler());
                         ch.pipeline().addLast(new PacketDecoder());
+                        ch.pipeline().addLast(new PacketEncoder());
                         ch.pipeline().addLast(new LoginResponseHandler());
                         ch.pipeline().addLast(new MessageResponseHandler());
                     }
@@ -50,18 +54,35 @@ public class ImClientBootStrap {
         });
     }
     private static void startConsoleThread(Channel channel) {
+        Scanner scanner = new Scanner(System.in);
+        LoginRequestPacket loginRequest = new LoginRequestPacket();
         new Thread(() -> {
             while (!Thread.interrupted()) {
                 if (LoginUtil.hasLogin(channel)) {
                     Scanner sc = new Scanner(System.in);
                     String line = sc.nextLine();
-
                     MessageRequestPacket packet = new MessageRequestPacket();
                     packet.setMessage(line);
                     ByteBuf byteBuf = PacketCodeC.INSTANCE.encode(channel.alloc(), packet);
                     channel.writeAndFlush(byteBuf);
+                }else {
+                    System.out.print("输入用户名登录: ");
+                    String username = scanner.nextLine();
+                    loginRequest.setUserName(username);
+                    // 密码使用默认的
+                    loginRequest.setPassword("pwd");
+                    // 发送登录数据包
+                    channel.writeAndFlush(loginRequest);
+                    waitForLoginResponse();
                 }
             }
         }).start();
+    }
+
+    private static void waitForLoginResponse() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ignored) {
+        }
     }
 }
