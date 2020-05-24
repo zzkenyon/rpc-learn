@@ -32,6 +32,7 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
     public void afterPropertiesSet() throws Exception {
         // socket 通信 发布服务
         try (ServerSocket serverSocket = new ServerSocket(port)){
+            System.out.println("rpc-server 启动成功。。。");
             while (true){
                 Socket socket = serverSocket.accept();
                 pool.execute(new ProcessorHandler(socket,serviceObjs));

@@ -1,6 +1,7 @@
 package com.pd;
 
-import com.pd.proxy.RpcProxyClient;
+import com.pd.pay.IPayService;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Hello world!
@@ -8,9 +9,13 @@ import com.pd.proxy.RpcProxyClient;
  */
 public class App {
     public static void main( String[] args ) {
-        RpcProxyClient rpcProxyClient = new RpcProxyClient();
-        IHelloService helloService = rpcProxyClient.clientProxy(IHelloService.class,"localhost",8080);
-        Object o = helloService.sayHello("zzk");
-        System.out.println((String) o);
+        ClassPathXmlApplicationContext classPathXmlApplicationContext=
+                new ClassPathXmlApplicationContext(new String[]{"application.xml"});
+
+        IPayService payService=(IPayService) classPathXmlApplicationContext.
+                getBean("payService");
+
+        String rs=payService.pay("Test"); //pay方法一定是远程调用
+        System.out.println(rs);
     }
 }
