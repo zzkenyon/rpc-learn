@@ -1,0 +1,10 @@
+dubbo:
+  application:
+    name: order-service
+  config-center:
+    address: 192.168.2.112:2181,192.168.2.113:2181,192.168.2.114:2181
+    protocol: zookeeper
+  scan:
+    base-packages: com.pd.order.impl
+  protocol:
+    port: 20880
